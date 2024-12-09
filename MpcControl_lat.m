@@ -31,14 +31,43 @@ classdef MpcControl_lat < MpcControlBase
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
+            A = mpc.A;
+            B = mpc.B;
+            Q = 10 * eye(2); % Adjust
+            R = 1 ; % Adjust
+
+            % Constraints
+            % u in U = { u | Mu <= m }
+            M = [1;-1]; m = [0.5236; 0.5236];
+            % x in X = { x | Fx <= f }
+            F = [1 0;-1 0;0 1;0 -1]; f = [3.5; 0.5; 0.0873; 0.0873];
             
+            [K,Qf,~] = dlqr(A,B,Q,R);
+            % MATLAB defines K as -K, so invert its signal
+            K = -K; 
+            
+            % Compute maximal invariant set
+            Xf = polytope([F;M*K],[f;m]);
+            Acl = [A+B*K];
+            while 1
+                prevXf = Xf;
+                [T,t] = double(Xf);
+                preXf = polytope(T*Acl,t);
+                Xf = intersect(Xf, preXf);
+                if isequal(prevXf, Xf)
+                    break
+                end
+            end
+            [Ff,ff] = double(Xf);
+
             % NOTE: The matrices mpc.A, mpc.B, mpc.C and mpc.D
             %       are the DISCRETE-TIME MODEL of your system
             %       You can find the linearization steady-state
             %       in mpc.xs and mpc.us.
             
             % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
-
+            x = sdpvar(nx,N,'full');
+            u = sdpvar(nu,N,'full');
             obj = 0;
             con = [];
 
@@ -48,17 +77,24 @@ classdef MpcControl_lat < MpcControlBase
             % offsets resulting from the linearization.
             % If you want to use the delta formulation make sure to
             % substract mpc.xs/mpc.us accordingly.
-            con = con + ( u0 == 0 );
+            con = con + ( u0 == u(:,1) );
 
             % Pass here YALMIP sdpvars which you want to debug. You can
             % then access them when calling your mpc controller like
             % [u, X, U] = mpc_lat.get_u(x0, ref);
             % with debugVars = {X_var, U_var};
-            debugVars = {};
+            debugVars = {x, u};
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
+            for i = 1:N-1
+                con = [con, x(:,i+1) == A*x(:,i) + B*u(:,i)]; % System dynamics
+                con = [con, F*x(:,i) <= f]; % State constraints
+                con = [con, M*u(:,i) <= m]; % Input constraints
+                obj = obj + (x(:,i) - x_ref)'*Q*(x(:,i) - x_ref) + (u(:,i) - u_ref)'*R*(u(:,i) - u_ref); % Cost function
+            end
+            con = [con, Ff*x(:,N) <= ff]; % Terminal constraint
+            obj = obj + (x(:,N) - x_ref)'*Qf*(x(:,N) - x_ref); % Terminal weight
             % Return YALMIP optimizer object
             ctrl_opti = optimizer(con, obj, sdpsettings('solver','gurobi'), ...
                 {x0, x_ref, u_ref, x0other}, {u0, debugVars{:}});
@@ -87,6 +123,20 @@ classdef MpcControl_lat < MpcControlBase
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             xs_ref = [0; 0];
             us_ref = 0;
+            % Constraints
+            con = [mpc.A*xs + mpc.B*us == 0]; % Stationnary state
+            con = [con, mpc.F*xs <= mpc.f];  % State constraints
+            con = [con, mpc.M*us <= mpc.m];  % Input constraints
+       
+            obj = (us - ref)'*(us - ref);
+        
+            % Solving
+            opts = sdpsettings('solver', 'gurobi');
+            optimize(con, obj, opts);
+        
+            % Sorties
+            xs_ref = value(xs);
+            us_ref = value(us);
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
