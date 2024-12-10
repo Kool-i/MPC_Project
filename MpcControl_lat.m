@@ -88,7 +88,7 @@ classdef MpcControl_lat < MpcControlBase
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             for i = 1:N-1
-                con = [con, x(:,i+1) == A*x(:,i) + B*u(:,i)]; % System dynamics
+                con = [con, x(:,i+1) == A*(x(:,i) - x_ref) + B*(u(:,i) - u_ref)]; % System dynamics
                 con = [con, F*x(:,i) <= f]; % State constraints
                 con = [con, M*u(:,i) <= m]; % Input constraints
                 obj = obj + (x(:,i) - x_ref)'*Q*(x(:,i) - x_ref) + (u(:,i) - u_ref)'*R*(u(:,i) - u_ref); % Cost function
@@ -97,7 +97,7 @@ classdef MpcControl_lat < MpcControlBase
             obj = obj + (x(:,N) - x_ref)'*Qf*(x(:,N) - x_ref); % Terminal weight
             % Return YALMIP optimizer object
             ctrl_opti = optimizer(con, obj, sdpsettings('solver','gurobi'), ...
-                {x0, x_ref, u_ref, x0other}, {u0, debugVars{:}});
+                {x0, x_ref, u_ref, x0other}, {u0, debugVars});
         end
         
         % Computes the steady state target which is passed to the
@@ -116,19 +116,19 @@ classdef MpcControl_lat < MpcControlBase
             B = mpc.B;
 
             % Linearization steady-state
-            xs = mpc.xs;
-            us = mpc.us;
+            xs = sdpvar(size(A,1),1);
+            us = sdpvar(size(B,2),1);
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             xs_ref = [0; 0];
             us_ref = 0;
             % Constraints
-            con = [mpc.A*xs + mpc.B*us == 0]; % Stationnary state
-            con = [con, mpc.F*xs <= mpc.f];  % State constraints
-            con = [con, mpc.M*us <= mpc.m];  % Input constraints
+            con = [A*xs + B*us == 0]; % Stationnary state
+            con = [con, F*xs <= f];  % State constraints
+            con = [con, M*us <= m];  % Input constraints
        
-            obj = (us - ref)'*(us - ref);
+            obj = (us - ref)' * (us - ref);
         
             % Solving
             opts = sdpsettings('solver', 'gurobi');
