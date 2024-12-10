@@ -91,15 +91,15 @@ classdef MpcControl_lon < MpcControlBase
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             for i = 1:N-1
-                con = [con, x(:,i+1) == A*x(:,i) + B*u(:,i)]; % System dynamics
+                con = [con, x(:,i+1) == A*(x(:,i) - V_ref) + B*(u(:,i) - u_ref)]; % System dynamics
                 con = [con, M*u(:,i) <= m]; % Input constraints
-                obj = obj + x(:,i)'*Q*x(:,i) + u(:,i)'*R*u(:,i); % Cost function
+                obj = obj + (x(:,i) - V_ref)'*Q*(x(:,i) - V_ref) + (u(:,i) - u_ref)'*R*(u(:,i) - u_ref); % Cost function
             end
             con = [con, Ff*x(:,N) <= ff]; % Terminal constraint
             obj = obj + x(:,N)'*Qf*x(:,N); % Terminal weight
             % Return YALMIP optimizer object
             ctrl_opti = optimizer(con, obj, sdpsettings('solver','gurobi'), ...
-                {x0, V_ref, u_ref, d_est, x0other}, {u0, debugVars{:}});
+                {x0, V_ref, u_ref, d_est, x0other}, {u0, debugVars});
         end
         
         % Computes the steady state target which is passed to the
@@ -127,8 +127,8 @@ classdef MpcControl_lon < MpcControlBase
             Vs_ref = 0;
             us_ref = 0;
             % Constraints
-            con = [mpc.A*xs + mpc.B*us == 0]; % Stationnary state
-            con = [con, mpc.M*us <= mpc.m];  % Input constraints
+            con = [A*xs + B*us == 0]; % Stationnary state
+            con = [con, M*us <= m];  % Input constraints
        
             obj = (us - ref)'*(us - ref);
         
