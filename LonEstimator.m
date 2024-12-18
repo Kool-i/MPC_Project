@@ -29,8 +29,19 @@ classdef LonEstimator
             est.A_hat = [];
             est.B_hat = [];
             est.C_hat = [];
+           
+            A=Ad(4,4);
+            B=Bd(4,2);
+            C=1;
+            [nx, nu] = size(B);
+            ny = size(C,1);
+            est.A_hat = [A, B;zeros(1,nx), 1];
+            est.B_hat = [B;zeros(1,nu)];
+            est.C_hat = [C,zeros(ny,1)];
             
             est.L = [];
+            est.L = -place(est.A_hat',est.C_hat',[0.4,0.5])';
+            % Faut ajouter xs_hat et us_hat
             
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -54,6 +65,7 @@ classdef LonEstimator
             
             % Estimation equation
             z_hat_next = [];
+            z_hat_next = est.A_hat*z_hat + est.B_hat*u + est.L_hat*(est.C_bar*z_hat-y);
 
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
