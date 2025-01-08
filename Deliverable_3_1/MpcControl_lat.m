@@ -83,29 +83,6 @@ classdef MpcControl_lat < MpcControlBase
             legend('Maximal invariant set K*Xf');
             xlabel('Delta angle [rad]');
 
-            % SET THE PROBLEM CONSTRAINTS con AND THE OBJECTIVE obj HERE
-            % x = sdpvar(nx,N,'full');
-            % u = sdpvar(nu,N,'full');
-            % obj = 0;
-            % con = [];
-            % for i = 1:N-1               
-            %     con = [con,(x(:,i+1) == mpc.f_xs_us + mpc.A*(x(:,i) - mpc.xs) + mpc.B*(u(:,i) - mpc.us))]; % System dynamics
-            %     con = [con , (M*(u(:,i)) <= m)]; % Input constraints
-            %     con = [con , (F*(x(:,i)) <= f)]; % Input constraints
-            %     obj = obj + (x(:,i) - x_ref)'*Q*(x(:,i) - x_ref) + (u(:,i) - u_ref)'*R*(u(:,i) - u_ref); % Cost function
-            % end
-            % con = [con , (Ff*(x(:,N) - x_ref) <= ff)];
-            % obj = obj + (x(:,N) - x_ref)'*Qf*(x(:,N) - x_ref); % Terminal weight
-            % 
-            % % Replace this line and set u0 to be the input that you
-            % % want applied to the system. Note that u0 is applied directly
-            % % to the nonlinear system. You need to take care of any 
-            % % offsets resulting from the linearization.
-            % % If you want to use the delta formulation make sure to
-            % % substract mpc.xs/mpc.us accordingly.
-            % con = [con , ( u0 == u(:,1))];
-            % con = [con , ( x0 == x(:,1))];
-
             x = sdpvar(nx,N,'full');
             u = sdpvar(nu,N,'full');
             obj = 0;
