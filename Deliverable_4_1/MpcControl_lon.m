@@ -129,7 +129,7 @@ classdef MpcControl_lon < MpcControlBase
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE YOUR CODE HERE
 
-            r = [-A*xs - B*(us - d_est) + xs; ref - d_est];
+            r = [-A*xs - B*(us - d_est) + xs; ref];
             M = [1 - A, -B; 1, 0];
             sol = (M^-1)*r;
             Vs_ref = sol(1);
