@@ -17,7 +17,7 @@ us = sys_lon.UserData.us;
 % PARAMETERS %
 xsafe = 7;
 Q = diag([3,1]);
-R = 1.5;
+R = 1.0;
 
 [K,Qf,~] = dlqr(Ad,Bd,Q,R);
 K = -K;
@@ -70,7 +70,7 @@ figure(3)
 hold on; grid on;
 Xtilde.plot('alpha', 0, 'edgecolor', 'b', 'linewidth', 2);
 X.plot('alpha', 0, 'edgecolor', 'r', 'linewidth', 2);
-legend('Xtilde','X');
+legend('Xtilde','X', Location="southeast");
 xlabel('delta-x position [m]'); ylabel('delta-V speed [m/s]');
 
 
